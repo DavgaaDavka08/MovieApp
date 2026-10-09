@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import type { Movie } from "@/types/movie";
-import { formatDuration, formatRating } from "@/lib/format";
+import { formatRating } from "@/lib/format";
 import { MoviePoster } from "./MoviePoster";
 import { WatchFullMovieButton } from "./WatchFullMovieButton";
 
@@ -57,12 +57,9 @@ export function HeroCarousel({ movies }: Props) {
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   {formatRating(movie.rating)}
                 </span>
-                <span>{movie.year}</span>
+                {movie.year && <span>{movie.year}</span>}
                 <span>·</span>
                 <span>{movie.genreLabel}</span>
-                <span>·</span>
-                <span>{formatDuration(movie.duration)}</span>
-                <span className="rounded border border-white/40 px-1.5 text-xs">{movie.ageRating}</span>
               </div>
               <p className="line-clamp-3 max-w-xl text-sm leading-6 text-white/85 sm:text-base">
                 {movie.description}

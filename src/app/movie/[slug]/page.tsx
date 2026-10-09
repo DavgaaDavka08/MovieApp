@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
+import { cache } from "react";
 import { PlayCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MoviePoster } from "@/components/movie/MoviePoster";
@@ -9,21 +10,21 @@ import { ShareButton } from "@/components/movie/ShareButton";
 import { TrailerPlayer } from "@/components/movie/TrailerPlayer";
 import { WatchFullMovieButton } from "@/components/movie/WatchFullMovieButton";
 import { formatDuration, formatPrice, formatRating } from "@/lib/format";
-import { getAllMovies, getCategory, getMovieBySlug, getRelatedMovies } from "@/lib/movies";
+import { getCategory } from "@/lib/categories";
+import { getMovieBySlug as fetchMovie, getRelatedMovies } from "@/lib/movies";
+
+// generateMetadata болон хуудас хоёр нэг хүсэлтээр мэдээллээ авна
+const getMovieBySlug = cache(fetchMovie);
 
 type Params = Promise<{ slug: string }>;
 type SearchParams = Promise<{ play?: string }>;
 
-/** Кино бүр өөрийн давтагдашгүй URL-тэй: /movie/[slug] */
-export function generateStaticParams() {
-  return getAllMovies().map((m) => ({ slug: m.slug }));
-}
-
+/** Кино бүр өөрийн давтагдашгүй URL-тэй: /movie/[slug], жишээ нь /movie/550-fight-club */
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
-  const movie = getMovieBySlug(slug);
+  const movie = await getMovieBySlug(slug);
   if (!movie) return { title: "Кино олдсонгүй" };
-  const title = `${movie.title} (${movie.year})`;
+  const title = movie.year ? `${movie.title} (${movie.year})` : movie.title;
   const image = movie.backdrop ?? movie.poster;
   return {
     title,
@@ -50,17 +51,23 @@ export default async function MoviePage({
 }) {
   const { slug } = await params;
   const { play } = await searchParams;
-  const movie = getMovieBySlug(slug);
+  const movie = await getMovieBySlug(slug);
   if (!movie) notFound();
+  // /movie/550 гэх мэт богино линкийг үндсэн slug руу шилжүүлнэ
+  if (movie.slug !== slug) {
+    permanentRedirect(`/movie/${movie.slug}${play ? `?play=${play}` : ""}`);
+  }
 
-  const related = getRelatedMovies(movie);
+  const related = await getRelatedMovies(movie.id);
   const details: { label: string; value: string }[] = [
-    { label: "Найруулагч", value: movie.director },
-    { label: "Жүжигчид", value: movie.cast.join(", ") },
-    { label: "Хэл", value: movie.language },
-    { label: "Хадмал", value: movie.subtitles.length ? movie.subtitles.join(", ") : "Байхгүй" },
+    { label: "Найруулагч", value: movie.director ?? "—" },
+    { label: "Жүжигчид", value: movie.cast.length ? movie.cast.join(", ") : "—" },
+    { label: "Гарсан огноо", value: movie.releaseDate ?? "—" },
+    { label: "Эх хэл", value: movie.language },
+    { label: "Ярианы хэл", value: movie.spokenLanguages.join(", ") || "—" },
+    { label: "Хадмал", value: "Удахгүй мэдээлэгдэнэ" },
     { label: "Үргэлжлэх хугацаа", value: formatDuration(movie.duration) },
-    { label: "Насны ангилал", value: movie.ageRating },
+    { label: "Насны ангилал", value: movie.ageRating ?? "—" },
   ];
 
   return (
@@ -104,14 +111,18 @@ export default async function MoviePage({
                 {formatRating(movie.rating)}
                 <span className="text-xs font-normal text-muted-foreground">/10</span>
               </span>
-              <span>{movie.year}</span>
-              <span>·</span>
-              <span>{formatDuration(movie.duration)}</span>
+              {movie.year && <span>{movie.year}</span>}
+              {movie.duration && (
+                <>
+                  <span>·</span>
+                  <span>{formatDuration(movie.duration)}</span>
+                </>
+              )}
               <span>·</span>
               <span>{movie.language}</span>
-              <span className="rounded border px-1.5 text-xs">{movie.ageRating}</span>
+              {movie.ageRating && <span className="rounded border px-1.5 text-xs">{movie.ageRating}</span>}
             </div>
-            <p className="max-w-2xl text-base leading-7">{movie.description}</p>
+            {movie.tagline && <p className="text-lg italic text-muted-foreground">{movie.tagline}</p>}
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <WatchFullMovieButton movie={movie} />
               <div className="flex gap-3">
@@ -131,13 +142,13 @@ export default async function MoviePage({
       </section>
 
       {/* Трейлер + дэлгэрэнгүй */}
-      <section className="mx-auto grid w-full max-w-[1280px] gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_340px]">
+      <section className="relative mx-auto grid w-full max-w-[1280px] gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_340px]">
         <div className="flex flex-col gap-4">
           <h2 className="text-xl font-semibold sm:text-2xl">Трейлер</h2>
           <TrailerPlayer movie={movie} autoStart={play === "trailer"} />
           <div className="mt-4 flex flex-col gap-2">
             <h2 className="text-xl font-semibold sm:text-2xl">Агуулга</h2>
-            <p className="leading-7 text-muted-foreground">{movie.synopsis}</p>
+            <p className="leading-7 text-muted-foreground">{movie.description}</p>
           </div>
         </div>
 
@@ -155,11 +166,9 @@ export default async function MoviePage({
             <span className="text-xl font-bold text-primary">{formatPrice(movie.price)}</span>
           </div>
           <WatchFullMovieButton movie={movie} className="w-full" />
-          {movie.isSample && (
-            <p className="text-xs text-muted-foreground">
-              Жишээ мэдээлэл. Трейлер: {movie.trailer.credit}
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground">
+            Киноны мэдээлэл, зураг: TMDB. Трейлер: YouTube.
+          </p>
         </aside>
       </section>
 

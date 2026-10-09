@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, SearchIcon, Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { getPrimaryGenre, searchMovies } from "@/lib/movies";
+import { getPrimaryGenre } from "@/lib/categories";
+import type { Movie } from "@/types/movie";
 import { formatPrice, formatRating } from "@/lib/format";
 import { MoviePoster } from "@/components/movie/MoviePoster";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,34 @@ export function SearchBox({ className, onNavigate }: { className?: string; onNav
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  const results = useMemo(() => (value.trim() ? searchMovies(value).slice(0, 5) : []), [value]);
+  const [results, setResults] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Бичиж дуусахыг 300мс хүлээгээд серверээс хайна
+  useEffect(() => {
+    const q = value.trim();
+    if (q.length < 2) {
+      setResults([]);
+      return;
+    }
+    const ctrl = new AbortController();
+    const t = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: ctrl.signal });
+        const data = (await res.json()) as { results: Movie[] };
+        setResults(data.results ?? []);
+      } catch {
+        /* цуцлагдсан */
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [value]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -59,7 +87,9 @@ export function SearchBox({ className, onNavigate }: { className?: string; onNav
 
       {open && value.trim().length > 0 && (
         <div className="absolute left-0 right-0 z-50 mt-2 overflow-hidden rounded-lg border bg-popover shadow-xl sm:left-auto sm:w-[460px]">
-          {results.length === 0 ? (
+          {loading && results.length === 0 ? (
+            <p className="p-4 text-sm text-muted-foreground">Хайж байна...</p>
+          ) : results.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">
               &ldquo;{value}&rdquo; илэрц олдсонгүй
             </p>
@@ -77,7 +107,7 @@ export function SearchBox({ className, onNavigate }: { className?: string; onNav
                       <p className="truncate font-medium">{movie.title}</p>
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        {formatRating(movie.rating)} · {movie.year} · {getPrimaryGenre(movie)}
+                        {[formatRating(movie.rating), movie.year, getPrimaryGenre(movie)].filter(Boolean).join(" · ")}
                       </p>
                       <p className="text-xs font-semibold text-primary">{formatPrice(movie.price)}</p>
                     </div>

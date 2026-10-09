@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
-import { getAllCategories } from "@/lib/movies";
+import { getAllCategories } from "@/lib/categories";
 
 export const Footer = () => {
   const year = new Date().getFullYear();
@@ -61,8 +61,9 @@ export const Footer = () => {
         </div>
       </div>
       <p className="mx-auto mt-8 max-w-[1280px] border-t border-white/15 pt-4 text-xs text-white/50">
-        Жишээ трейлерүүд: Blender Foundation-ий нээлттэй кинонууд (Creative Commons). Платформ нь
-        зөвхөн түгээх эрх бүхий контент нийтэлнэ.
+        Киноны мэдээлэл, зургийг TMDB-ээс авсан. This product uses the TMDB API but is not endorsed or
+        certified by TMDB. Трейлерүүд YouTube-ээр тоглогдоно. Бүтэн киног зөвхөн түгээх эрх бүхий
+        контентоор нийтэлнэ.
       </p>
     </footer>
   );

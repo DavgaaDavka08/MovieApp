@@ -48,14 +48,13 @@ export function MoviePoster({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_55%)]" />
           {variant === "poster" && (
             <>
-              <span className="relative text-[10px] uppercase tracking-[0.3em] text-white/60">
-                {movie.year}
-              </span>
+              {movie.year && (
+                <span className="relative text-[10px] uppercase tracking-[0.3em] text-white/60">
+                  {movie.year}
+                </span>
+              )}
               <span className="relative font-display text-2xl font-semibold uppercase leading-tight tracking-wide">
                 {movie.title}
-              </span>
-              <span className="relative mt-1 line-clamp-2 text-xs text-white/70">
-                {movie.tagline}
               </span>
             </>
           )}

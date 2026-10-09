@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { mainNav } from "@/config/site";
-import { getAllCategories } from "@/lib/movies";
+import { getAllCategories } from "@/lib/categories";
 import { SearchBox } from "./SearchBox";
 import { LoginButton } from "./LoginButton";
 

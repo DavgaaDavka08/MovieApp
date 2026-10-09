@@ -1,64 +1,77 @@
 export type CategorySlug =
   | "action"
+  | "adventure"
   | "comedy"
   | "drama"
   | "romance"
   | "horror"
   | "thriller"
+  | "crime"
+  | "scifi"
+  | "fantasy"
   | "animation"
   | "family"
+  | "documentary"
   | "mongolian"
-  | "chinese"
   | "korean"
-  | "international";
+  | "chinese"
+  | "japanese";
 
 export type Category = {
   slug: CategorySlug;
   name: string;
   /** Төрөл (genre) эсвэл улс/хэлний ангилал */
   kind: "genre" | "region";
+  /** TMDB дээрх харгалзах шүүлтүүр */
+  tmdb: { genreId?: number; language?: string };
 };
 
+/** Жагсаалт, картанд хэрэглэгдэх киноны үндсэн мэдээлэл */
 export type Movie = {
-  id: string;
-  /** Facebook болон бусад сувгаар хуваалцах давтагдашгүй URL: /movie/[slug] */
+  id: number;
+  /** Facebook-д хуваалцах давтагдашгүй URL: /movie/[slug] (жишээ нь 550-fight-club) */
   slug: string;
   title: string;
   originalTitle?: string;
-  tagline: string;
   description: string;
-  synopsis: string;
-  year: number;
-  /** Минутаар */
-  duration: number;
+  year: number | null;
+  releaseDate: string | null;
   /** Төгрөгөөр. Үндсэн үнэ 10,000₮ */
   price: number;
   categories: CategorySlug[];
-  language: string;
-  subtitles: string[];
-  ageRating: string;
   rating: number;
-  director: string;
-  cast: string[];
-  keywords: string[];
-  /** Босоо постер. Байхгүй бол автоматаар үүсгэсэн постер харагдана */
-  poster?: string;
-  /** Хэвтээ баннер */
-  backdrop?: string;
-  /** Постер үүсгэх өнгө [эхлэл, төгсгөл] */
-  palette: [string, string];
-  trailer: {
-    src: string;
-    type: "video/mp4";
-    /** Трейлерийн эх сурвалж, лиценз */
-    credit: string;
-  };
-  addedAt: string;
+  voteCount: number;
   popularity: number;
-  featured?: boolean;
-  trending?: boolean;
-  /** Жишээ өгөгдөл эсэх. Бодит каталог холбогдоход false болно */
-  isSample: boolean;
+  poster?: string;
+  backdrop?: string;
+  /** Зураг байхгүй үед постер үүсгэх өнгө */
+  palette: [string, string];
 };
 
-export type MovieSort = "popular" | "newest" | "year" | "title" | "price";
+export type Trailer = {
+  provider: "youtube";
+  key: string;
+  name: string;
+};
+
+/** Киноны дэлгэрэнгүй хуудсанд хэрэглэгдэх бүрэн мэдээлэл */
+export type MovieDetail = Movie & {
+  tagline: string;
+  /** минутаар */
+  duration: number | null;
+  language: string;
+  spokenLanguages: string[];
+  ageRating: string | null;
+  director: string | null;
+  cast: string[];
+  trailer: Trailer | null;
+};
+
+export type MovieSort = "popular" | "newest" | "rating" | "title";
+
+export type Paged<T> = {
+  results: T[];
+  page: number;
+  totalPages: number;
+  totalResults: number;
+};
