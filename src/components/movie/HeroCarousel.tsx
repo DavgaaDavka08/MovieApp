@@ -3,29 +3,38 @@
 import * as React from "react";
 import Autoplay from "embla-carousel-autoplay";
 import Link from "next/link";
-import { Info, PlayCircle, Star } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
-import type { Movie } from "@/types/movie";
-import { formatRating } from "@/lib/format";
+import type { MovieDetail } from "@/types/movie";
+import { cn } from "@/lib/utils";
 import { MoviePoster } from "./MoviePoster";
-import { WatchFullMovieButton } from "./WatchFullMovieButton";
+import { Rating } from "./Rating";
+import { TrailerDialog } from "./TrailerDialog";
 
-type Props = {
-  movies: (Movie & { genreLabel: string })[];
-};
+export function HeroCarousel({ movies }: { movies: MovieDetail[] }) {
+  const plugin = React.useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
+  const [api, setApi] = React.useState<CarouselApi>();
+  const [current, setCurrent] = React.useState(0);
 
-export function HeroCarousel({ movies }: Props) {
-  const plugin = React.useRef(Autoplay({ delay: 6000, stopOnInteraction: true }));
+  React.useEffect(() => {
+    if (!api) return;
+    const onSelect = () => setCurrent(api.selectedScrollSnap());
+    onSelect();
+    api.on("select", onSelect);
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
 
   return (
     <Carousel
+      setApi={setApi}
       plugins={[plugin.current]}
       opts={{ loop: true }}
       className="relative w-full"
@@ -34,62 +43,80 @@ export function HeroCarousel({ movies }: Props) {
     >
       <CarouselContent className="ml-0">
         {movies.map((movie, index) => (
-          <CarouselItem key={movie.id} className="relative h-[78vh] min-h-[520px] max-h-[760px] w-full pl-0">
-            <MoviePoster
-              movie={movie}
-              variant="backdrop"
-              className="absolute inset-0"
-              sizes="100vw"
-              priority={index === 0}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
+          <CarouselItem key={movie.id} className="pl-0">
+            <div className="relative">
+              <Link href={`/movie/${movie.slug}`} aria-label={movie.title}>
+                <MoviePoster
+                  movie={movie}
+                  variant="backdrop"
+                  className="h-[246px] w-full sm:h-[420px] lg:h-[600px]"
+                  sizes="100vw"
+                  priority={index === 0}
+                />
+              </Link>
 
-            <div className="absolute inset-x-0 bottom-0 mx-auto flex w-full max-w-[1280px] flex-col gap-3 px-4 pb-12 text-white sm:px-6 sm:pb-16">
-              <span className="w-fit rounded-full bg-primary px-3 py-1 text-[11px] font-semibold uppercase tracking-widest">
-                Онцлох кино
-              </span>
-              <h1 className="max-w-2xl font-display text-4xl font-bold uppercase leading-none tracking-wide sm:text-6xl">
-                {movie.title}
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/80">
-                <span className="flex items-center gap-1 font-semibold text-white">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  {formatRating(movie.rating)}
-                </span>
-                {movie.year && <span>{movie.year}</span>}
-                <span>·</span>
-                <span>{movie.genreLabel}</span>
-              </div>
-              <p className="line-clamp-3 max-w-xl text-sm leading-6 text-white/85 sm:text-base">
-                {movie.description}
-              </p>
-              <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <WatchFullMovieButton movie={movie} />
-                <div className="flex gap-3">
-                  <Button asChild size="lg" variant="secondary" className="flex-1 gap-2 sm:flex-none">
-                    <Link href={`/movie/${movie.slug}?play=trailer#trailer`}>
-                      <PlayCircle className="h-5 w-5" /> Трейлер үзэх
-                    </Link>
-                  </Button>
-                  <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    className="flex-1 gap-2 border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white sm:flex-none"
-                  >
-                    <Link href={`/movie/${movie.slug}`}>
-                      <Info className="h-5 w-5" /> Дэлгэрэнгүй
-                    </Link>
-                  </Button>
-                </div>
+              {/* Desktop: зураг дээр бичвэр */}
+              <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-black/60 via-black/20 to-transparent lg:block" />
+              <div className="absolute inset-y-0 left-0 hidden w-full max-w-[1280px] lg:left-1/2 lg:flex lg:-translate-x-1/2 lg:items-center">
+                <HeroText movie={movie} overlay className="w-[404px] text-white" />
               </div>
             </div>
+
+            {/* Гар утас: зурагны доор бичвэр */}
+            <HeroText movie={movie} className="px-5 py-5 lg:hidden" />
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="left-4 hidden border-white/30 bg-black/40 text-white hover:bg-black/60 hover:text-white md:flex" />
-      <CarouselNext className="right-4 hidden border-white/30 bg-black/40 text-white hover:bg-black/60 hover:text-white md:flex" />
+
+      <CarouselPrevious className="left-11 top-[300px] hidden lg:flex" />
+      <CarouselNext className="right-11 top-[300px] hidden lg:flex" />
+
+      <div className="absolute left-1/2 top-[220px] flex -translate-x-1/2 gap-2 sm:top-[392px] lg:top-[565px]">
+        {movies.map((m, i) => (
+          <button
+            key={m.id}
+            type="button"
+            aria-label={`${i + 1}-р слайд`}
+            onClick={() => api?.scrollTo(i)}
+            className={cn(
+              "h-2 w-2 rounded-full transition",
+              current === i ? "bg-white" : "bg-white/40"
+            )}
+          />
+        ))}
+      </div>
     </Carousel>
+  );
+}
+
+function HeroText({
+  movie,
+  overlay = false,
+  className,
+}: {
+  movie: MovieDetail;
+  overlay?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex flex-col gap-4", className)}>
+      <div className="flex items-start justify-between gap-4 lg:flex-col lg:gap-1">
+        <div>
+          <p className="text-sm lg:text-base">Одоо гарч буй:</p>
+          <h2 className="text-2xl font-semibold lg:text-4xl lg:font-bold">{movie.title}</h2>
+        </div>
+        <Rating value={movie.rating} className={overlay ? "text-lg [&_span:last-child]:text-white/60" : ""} />
+      </div>
+      <p className="line-clamp-5 text-sm leading-5 lg:text-xs lg:leading-5">{movie.description}</p>
+      {movie.trailer && (
+        <div>
+          <TrailerDialog
+            title={movie.title}
+            trailerKey={movie.trailer.key}
+            variant={overlay ? "secondary" : "default"}
+          />
+        </div>
+      )}
+    </div>
   );
 }

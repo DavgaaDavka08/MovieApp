@@ -3,15 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, SearchIcon, Star } from "lucide-react";
+import { ArrowRight, SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { getPrimaryGenre } from "@/lib/categories";
 import type { Movie } from "@/types/movie";
-import { formatPrice, formatRating } from "@/lib/format";
 import { MoviePoster } from "@/components/movie/MoviePoster";
+import { Rating } from "@/components/movie/Rating";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-export function SearchBox({ className, onNavigate }: { className?: string; onNavigate?: () => void }) {
+export function SearchBox({
+  className,
+  onNavigate,
+  autoFocus,
+}: {
+  className?: string;
+  onNavigate?: () => void;
+  autoFocus?: boolean;
+}) {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);
@@ -73,46 +82,47 @@ export function SearchBox({ className, onNavigate }: { className?: string; onNav
         <SearchIcon className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Кино, төрөл, жүжигчин хайх..."
+          placeholder="Хайх..."
+          autoFocus={autoFocus}
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          className="w-full rounded-lg bg-secondary pl-8"
+          className="w-full pl-8 shadow-none"
           aria-label="Кино хайх"
         />
       </form>
 
       {open && value.trim().length > 0 && (
-        <div className="absolute left-0 right-0 z-50 mt-2 overflow-hidden rounded-lg border bg-popover shadow-xl sm:left-auto sm:w-[460px]">
+        <div className="absolute left-0 right-0 z-50 mt-1 rounded-lg border bg-popover p-3 text-popover-foreground shadow-md sm:left-auto sm:w-[577px]">
           {loading && results.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">Хайж байна...</p>
+            <p className="p-2 text-sm text-muted-foreground">Хайж байна...</p>
           ) : results.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">
-              &ldquo;{value}&rdquo; илэрц олдсонгүй
-            </p>
+            <p className="p-2 text-sm text-muted-foreground">Илэрц олдсонгүй</p>
           ) : (
-            <ul className="flex flex-col divide-y">
-              {results.map((movie) => (
+            <ul className="flex flex-col">
+              {results.slice(0, 5).map((movie) => (
                 <li key={movie.id}>
                   <Link
                     href={`/movie/${movie.slug}`}
                     onClick={close}
-                    className="flex items-center gap-3 p-3 transition hover:bg-accent"
+                    className="flex gap-4 rounded-md p-2 transition hover:bg-accent"
                   >
-                    <MoviePoster movie={movie} className="h-[72px] w-12 shrink-0 rounded" sizes="48px" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{movie.title}</p>
-                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                        {[formatRating(movie.rating), movie.year, getPrimaryGenre(movie)].filter(Boolean).join(" · ")}
-                      </p>
-                      <p className="text-xs font-semibold text-primary">{formatPrice(movie.price)}</p>
+                    <MoviePoster movie={movie} className="h-[100px] w-[67px] shrink-0 rounded-md" sizes="67px" />
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <p className="truncate text-lg font-semibold">{movie.title}</p>
+                      <Rating value={movie.rating} />
+                      <div className="mt-auto flex items-center justify-between text-sm">
+                        <span>{[movie.year, getPrimaryGenre(movie)].filter(Boolean).join(" · ")}</span>
+                        <span className="flex items-center gap-1 font-medium">
+                          Дэлгэрэнгүй <ArrowRight className="h-4 w-4" />
+                        </span>
+                      </div>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
                   </Link>
+                  <Separator className="my-2" />
                 </li>
               ))}
             </ul>
@@ -120,7 +130,7 @@ export function SearchBox({ className, onNavigate }: { className?: string; onNav
           <Link
             href={`/movies?q=${encodeURIComponent(value.trim())}`}
             onClick={close}
-            className="block border-t bg-secondary/50 p-3 text-sm font-medium hover:bg-accent"
+            className="block px-2 py-2 text-sm font-medium hover:underline"
           >
             &ldquo;{value}&rdquo; — бүх илэрцийг харах
           </Link>

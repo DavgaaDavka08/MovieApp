@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Film, Play, RotateCcw } from "lucide-react";
 import type { MovieDetail } from "@/types/movie";
+import { Button } from "@/components/ui/button";
 import { MoviePoster } from "./MoviePoster";
 import { WatchFullMovieButton } from "./WatchFullMovieButton";
 
@@ -108,7 +109,7 @@ export function TrailerPlayer({ movie, autoStart = false }: Props) {
 
   if (!movie.trailer) {
     return (
-      <div className="relative flex aspect-video w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-xl bg-secondary text-center">
+      <div className="relative flex aspect-video w-full flex-col items-center justify-center gap-3 overflow-hidden rounded bg-secondary text-center">
         <MoviePoster movie={movie} variant="backdrop" className="absolute inset-0 opacity-30" sizes="900px" />
         <Film className="relative h-10 w-10 text-muted-foreground" />
         <p className="relative font-semibold">Энэ киноны трейлер одоогоор байхгүй байна</p>
@@ -119,7 +120,7 @@ export function TrailerPlayer({ movie, autoStart = false }: Props) {
   return (
     <div
       id="trailer"
-      className="relative aspect-video w-full scroll-mt-24 overflow-hidden rounded-xl bg-black"
+      className="relative aspect-video w-full scroll-mt-24 overflow-hidden rounded bg-black"
     >
       {/* YouTube тоглуулагч энд үүснэ */}
       <div
@@ -138,26 +139,22 @@ export function TrailerPlayer({ movie, autoStart = false }: Props) {
           <MoviePoster movie={movie} variant="backdrop" className="absolute inset-0" sizes="(max-width: 1024px) 100vw, 900px" />
           <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
           <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/40 transition group-hover:scale-110 sm:h-20 sm:w-20">
-              <Play className="ml-1 h-8 w-8 fill-white" />
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-black transition group-hover:scale-105">
+              <Play className="ml-0.5 h-6 w-6 fill-black" />
             </span>
-            <span className="text-sm font-semibold sm:text-base">Трейлер үзэх · Үнэгүй</span>
+            <span className="text-sm font-medium">Трейлер үзэх</span>
           </span>
         </button>
       )}
 
       {state === "ended" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/90 p-6 text-center text-white">
-          <p className="font-display text-2xl font-semibold sm:text-3xl">Киног бүтнээр нь үзэх үү?</p>
+          <p className="text-2xl font-semibold">Киног бүтнээр нь үзэх үү?</p>
           {movie.tagline && <p className="max-w-md text-sm text-white/70">{movie.tagline}</p>}
-          <WatchFullMovieButton movie={movie} />
-          <button
-            type="button"
-            onClick={replay}
-            className="flex items-center gap-2 text-sm text-white/70 hover:text-white"
-          >
-            <RotateCcw className="h-4 w-4" /> Трейлерийг дахин үзэх
-          </button>
+          <WatchFullMovieButton movie={movie} variant="secondary" />
+          <Button variant="link" onClick={replay} className="text-white/70 hover:text-white">
+            <RotateCcw /> Трейлерийг дахин үзэх
+          </Button>
         </div>
       )}
 
@@ -165,14 +162,11 @@ export function TrailerPlayer({ movie, autoStart = false }: Props) {
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/90 p-6 text-center text-white">
           <p className="font-semibold">Трейлер ачаалж чадсангүй</p>
           <p className="text-sm text-white/60">Интернет холболтоо шалгаад дахин оролдоно уу.</p>
-          <a
-            href={`https://www.youtube.com/watch?v=${movie.trailer.key}`}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-md border border-white/30 px-4 py-2 text-sm hover:bg-white/10"
-          >
-            YouTube дээр үзэх
-          </a>
+          <Button asChild variant="secondary">
+            <a href={`https://www.youtube.com/watch?v=${movie.trailer.key}`} target="_blank" rel="noreferrer">
+              YouTube дээр үзэх
+            </a>
+          </Button>
         </div>
       )}
     </div>

@@ -24,8 +24,8 @@ export function ShareButton({ title, path }: { title: string; path: string }) {
   };
 
   return (
-    <Button variant="outline" size="lg" onClick={onShare} className="gap-2">
-      {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+    <Button variant="outline" onClick={onShare}>
+      {copied ? <Check /> : <Share2 />}
       {copied ? "Линк хуулагдлаа" : "Хуваалцах"}
     </Button>
   );

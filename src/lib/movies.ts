@@ -122,10 +122,11 @@ export async function getUpcomingMovies() {
   return (await safeList("/movie/upcoming")).results;
 }
 
-/** Hero хэсэгт гарах онцлох кинонууд (баннер зурагтай) */
-export async function getFeaturedMovies(limit = 6) {
-  const list = await getTrendingMovies();
-  return list.filter((m) => m.backdrop && m.description).slice(0, limit);
+/** Hero хэсэгт гарах одоо гарч буй кинонууд — трейлерийн мэдээлэлтэй */
+export async function getFeaturedMovies(limit = 5): Promise<MovieDetail[]> {
+  const list = (await getNowPlayingMovies()).filter((m) => m.backdrop).slice(0, limit);
+  const details = await Promise.all(list.map((m) => getMovieBySlug(m.slug).catch(() => null)));
+  return details.filter((d): d is MovieDetail => d !== null);
 }
 
 const SORT_MAP: Record<MovieSort, string> = {

@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
-import { PlayCircle, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { MoviePoster } from "@/components/movie/MoviePoster";
-import { MovieRow } from "@/components/movie/MovieRow";
+import { MovieSection } from "@/components/movie/MovieSection";
+import { Rating } from "@/components/movie/Rating";
 import { ShareButton } from "@/components/movie/ShareButton";
 import { TrailerPlayer } from "@/components/movie/TrailerPlayer";
 import { WatchFullMovieButton } from "@/components/movie/WatchFullMovieButton";
-import { formatDuration, formatPrice, formatRating } from "@/lib/format";
+import { formatDuration, formatPrice } from "@/lib/format";
 import { getCategory } from "@/lib/categories";
 import { getMovieBySlug as fetchMovie, getRelatedMovies } from "@/lib/movies";
 
@@ -59,120 +60,97 @@ export default async function MoviePage({
   }
 
   const related = await getRelatedMovies(movie.id);
-  const details: { label: string; value: string }[] = [
+  const meta = [movie.releaseDate, movie.ageRating, formatDuration(movie.duration)].filter(
+    (v) => v && v !== "—"
+  );
+  const credits: { label: string; value: string }[] = [
     { label: "Найруулагч", value: movie.director ?? "—" },
-    { label: "Жүжигчид", value: movie.cast.length ? movie.cast.join(", ") : "—" },
-    { label: "Гарсан огноо", value: movie.releaseDate ?? "—" },
-    { label: "Эх хэл", value: movie.language },
-    { label: "Ярианы хэл", value: movie.spokenLanguages.join(", ") || "—" },
-    { label: "Хадмал", value: "Удахгүй мэдээлэгдэнэ" },
-    { label: "Үргэлжлэх хугацаа", value: formatDuration(movie.duration) },
-    { label: "Насны ангилал", value: movie.ageRating ?? "—" },
+    { label: "Жүжигчид", value: movie.cast.length ? movie.cast.join(" · ") : "—" },
+    { label: "Хэл", value: movie.spokenLanguages.join(", ") || movie.language },
   ];
 
   return (
-    <div className="flex flex-col gap-12">
-      {/* Баннер */}
-      <section className="relative">
-        <div className="absolute inset-0 h-[420px] overflow-hidden sm:h-[520px]">
-          <MoviePoster movie={movie} variant="backdrop" className="absolute inset-0 opacity-60" sizes="100vw" priority />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/10" />
+    <div className="flex flex-col gap-8 pt-8 lg:pt-[52px]">
+      <div className="mx-auto flex w-full max-w-[1080px] flex-col gap-6 px-5 lg:px-0">
+        {/* Гарчиг */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-bold lg:text-4xl">{movie.title}</h1>
+            {movie.originalTitle && <p className="text-sm text-muted-foreground">{movie.originalTitle}</p>}
+            <p className="text-sm lg:text-lg">{meta.join(" · ")}</p>
+          </div>
+          <div className="flex shrink-0 flex-col items-end">
+            <span className="hidden text-xs font-medium lg:block">Үнэлгээ</span>
+            <Rating value={movie.rating} className="lg:text-lg" />
+            <span className="text-xs text-muted-foreground">
+              {new Intl.NumberFormat("en-US", { notation: "compact" }).format(movie.voteCount)} санал
+            </span>
+          </div>
         </div>
 
-        <div className="relative mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pt-8 sm:px-6 sm:pt-16 md:flex-row md:items-end md:gap-10">
+        {/* Постер + трейлер */}
+        <div className="flex gap-8">
           <MoviePoster
             movie={movie}
-            className="hidden aspect-[2/3] w-[260px] shrink-0 rounded-xl shadow-2xl md:block"
-            sizes="260px"
+            className="hidden aspect-[2/3] w-[290px] shrink-0 rounded lg:block"
+            sizes="290px"
+            priority
           />
-          <div className="flex flex-1 flex-col gap-4">
-            <div className="flex flex-wrap gap-2">
+          <div className="flex-1">
+            <TrailerPlayer movie={movie} autoStart={play === "trailer"} />
+          </div>
+        </div>
+
+        {/* Тайлбар */}
+        <div className="flex gap-6">
+          <MoviePoster
+            movie={movie}
+            className="aspect-[2/3] w-[100px] shrink-0 rounded lg:hidden"
+            sizes="100px"
+          />
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-wrap gap-3">
               {movie.categories.map((c) => (
-                <Link
-                  key={c}
-                  href={`/movies?category=${c}`}
-                  className="rounded-full border border-foreground/20 bg-background/40 px-2.5 py-0.5 text-xs font-semibold backdrop-blur hover:bg-accent"
-                >
-                  {getCategory(c)?.name ?? c}
+                <Link key={c} href={`/movies?category=${c}`}>
+                  <Badge variant="outline" className="rounded-full hover:bg-accent">
+                    {getCategory(c)?.name ?? c}
+                  </Badge>
                 </Link>
               ))}
             </div>
-            <div>
-              <h1 className="font-display text-4xl font-bold uppercase leading-none tracking-wide sm:text-6xl">
-                {movie.title}
-              </h1>
-              {movie.originalTitle && (
-                <p className="mt-2 text-sm text-muted-foreground">{movie.originalTitle}</p>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1 font-semibold text-foreground">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                {formatRating(movie.rating)}
-                <span className="text-xs font-normal text-muted-foreground">/10</span>
-              </span>
-              {movie.year && <span>{movie.year}</span>}
-              {movie.duration && (
-                <>
-                  <span>·</span>
-                  <span>{formatDuration(movie.duration)}</span>
-                </>
-              )}
-              <span>·</span>
-              <span>{movie.language}</span>
-              {movie.ageRating && <span className="rounded border px-1.5 text-xs">{movie.ageRating}</span>}
-            </div>
-            {movie.tagline && <p className="text-lg italic text-muted-foreground">{movie.tagline}</p>}
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <WatchFullMovieButton movie={movie} />
-              <div className="flex gap-3">
-                <Button asChild size="lg" variant="secondary" className="flex-1 gap-2 sm:flex-none">
-                  <a href="#trailer">
-                    <PlayCircle className="h-5 w-5" /> Трейлер үзэх
-                  </a>
-                </Button>
-                <ShareButton title={movie.title} path={`/movie/${movie.slug}`} />
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Трейлер үнэгүй · Бүтэн кино нэг удаагийн төлбөр {formatPrice(movie.price)} · Сар бүрийн захиалга шаардлагагүй
+            <p className="text-base leading-6">{movie.description}</p>
+          </div>
+        </div>
+
+        {/* Үзэх */}
+        <div className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold">Бүтэн киног үзэх</p>
+            <p className="text-sm text-muted-foreground">
+              Трейлер үнэгүй · Нэг удаагийн төлбөр {formatPrice(movie.price)}
             </p>
           </div>
-        </div>
-      </section>
-
-      {/* Трейлер + дэлгэрэнгүй */}
-      <section className="relative mx-auto grid w-full max-w-[1280px] gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_340px]">
-        <div className="flex flex-col gap-4">
-          <h2 className="text-xl font-semibold sm:text-2xl">Трейлер</h2>
-          <TrailerPlayer movie={movie} autoStart={play === "trailer"} />
-          <div className="mt-4 flex flex-col gap-2">
-            <h2 className="text-xl font-semibold sm:text-2xl">Агуулга</h2>
-            <p className="leading-7 text-muted-foreground">{movie.description}</p>
+          <div className="flex gap-3">
+            <ShareButton title={movie.title} path={`/movie/${movie.slug}`} />
+            <WatchFullMovieButton movie={movie} />
           </div>
         </div>
 
-        <aside className="flex flex-col gap-4 rounded-xl bg-secondary p-5 lg:self-start">
-          <dl className="flex flex-col divide-y divide-border">
-            {details.map((d) => (
-              <div key={d.label} className="grid grid-cols-[120px_1fr] gap-3 py-3 text-sm">
-                <dt className="font-semibold">{d.label}</dt>
-                <dd className="text-muted-foreground">{d.value}</dd>
+        {/* Баг бүрэлдэхүүн */}
+        <div className="flex flex-col gap-5">
+          {credits.map((c) => (
+            <div key={c.label} className="flex flex-col gap-1">
+              <div className="flex gap-[53px]">
+                <span className="w-[100px] shrink-0 font-bold">{c.label}</span>
+                <span>{c.value}</span>
               </div>
-            ))}
-          </dl>
-          <div className="flex items-center justify-between rounded-lg bg-background p-4">
-            <span className="text-sm text-muted-foreground">Үнэ</span>
-            <span className="text-xl font-bold text-primary">{formatPrice(movie.price)}</span>
-          </div>
-          <WatchFullMovieButton movie={movie} className="w-full" />
-          <p className="text-xs text-muted-foreground">
-            Киноны мэдээлэл, зураг: TMDB. Трейлер: YouTube.
-          </p>
-        </aside>
-      </section>
+              <Separator className="mt-4" />
+            </div>
+          ))}
+        </div>
+      </div>
 
-      <MovieRow title="Танд таалагдаж магадгүй" movies={related} href="/movies" />
+      <MovieSection title="Төстэй кинонууд" movies={related} limit={5} className="max-w-[1080px]" />
     </div>
   );
 }

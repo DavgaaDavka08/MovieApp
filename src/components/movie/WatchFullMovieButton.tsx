@@ -12,12 +12,12 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Movie } from "@/types/movie";
 import { formatPrice } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
 type Props = {
   movie: Pick<Movie, "title" | "price">;
   className?: string;
   size?: "default" | "lg";
+  variant?: "default" | "secondary" | "outline";
 };
 
 /**
@@ -25,7 +25,7 @@ type Props = {
  * Phase 1: төлбөр, нэвтрэлт хараахан холбогдоогүй тул хэрэглэгчид
  * дараагийн алхмуудыг үнэн зөв тайлбарлана. Хуурамч төлбөр үүсгэхгүй.
  */
-export function WatchFullMovieButton({ movie, className, size = "lg" }: Props) {
+export function WatchFullMovieButton({ movie, className, size = "default", variant = "default" }: Props) {
   const steps = [
     { icon: Smartphone, text: "Утасны дугаар, нууц үгээр нэвтрэх" },
     { icon: QrCode, text: "QPay / банкны аппаар QR уншуулж төлөх" },
@@ -34,14 +34,8 @@ export function WatchFullMovieButton({ movie, className, size = "lg" }: Props) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          size={size}
-          className={cn(
-            "gap-2 bg-primary font-semibold text-primary-foreground hover:bg-primary/90",
-            className
-          )}
-        >
-          <PlayCircle className="h-5 w-5" />
+        <Button size={size} variant={variant} className={className}>
+          <PlayCircle />
           Бүтэн киног үзэх — {formatPrice(movie.price)}
         </Button>
       </DialogTrigger>
@@ -55,7 +49,7 @@ export function WatchFullMovieButton({ movie, className, size = "lg" }: Props) {
         <ol className="flex flex-col gap-3">
           {steps.map(({ icon: Icon, text }, i) => (
             <li key={text} className="flex items-center gap-3 rounded-lg bg-secondary p-3 text-sm">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-background">
                 <Icon className="h-4 w-4" />
               </span>
               <span>

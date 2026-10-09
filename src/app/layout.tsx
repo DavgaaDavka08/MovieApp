@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Oswald } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ui/my-shadchn/theme-provider";
 import Header from "./_Components/Header";
@@ -10,12 +10,6 @@ import { siteConfig } from "@/config/site";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin", "cyrillic"],
-});
-
-const oswald = Oswald({
-  variable: "--font-oswald",
-  subsets: ["latin", "cyrillic"],
-  weight: ["500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -33,7 +27,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0a",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -43,8 +37,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="mn" suppressHydrationWarning>
-      <body className={`${inter.variable} ${oswald.variable} font-sans antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
           <Header />
           <main className="min-h-[60vh]">{children}</main>
           <Footer />
